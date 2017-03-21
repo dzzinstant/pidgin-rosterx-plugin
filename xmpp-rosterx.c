@@ -1052,8 +1052,8 @@ static PurplePluginInfo info = {
 	PURPLE_PLUGIN_MAGIC,              /* magic number */
 	PURPLE_MAJOR_VERSION,             /* purple major */
 	10 /*PURPLE_MINOR_VERSION */,     /* purple minor: normally PURPLE_MINOR_VERSION
-									   * Use an explicit number if you want to use the plugin also with older
-									   * versions of Pidgin, e.g. 10 for Pidgin 2.10 and later */
+	                                   * Use an explicit number if you want to use the plugin also with older
+	                                   * versions of Pidgin, e.g. 10 for Pidgin 2.10 and later */
 
 	PURPLE_PLUGIN_STANDARD,           /* plugin type */
 	NULL,                             /* UI requirement */
@@ -1069,7 +1069,7 @@ static PurplePluginInfo info = {
 	"The XMPP Roster Item Exchange plugin allows you to suggest other contacts "
 		"from your roster to one of your buddies. "
 		"This is an implementation of the client-to-client aspect of XEP-0144.", 
-	/* description */
+	                                  /* description */
 	PLUGIN_AUTHOR,                    /* author */
 	PLUGIN_HOMEPAGE,                  /* homepage */
 
@@ -1093,4 +1093,3 @@ init_plugin(PurplePlugin *plugin)
 }
 
 PURPLE_INIT_PLUGIN(core-dzzinstant-rosterx, init_plugin, info)
-
