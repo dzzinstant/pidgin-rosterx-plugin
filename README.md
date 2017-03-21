@@ -10,12 +10,13 @@ As it does not depend on Gtk-specific code, it should also work with other libpu
   You don't have to run make if you only want to build the plugin.
 3. Copy the plugin source code to the libpurple plugin directory:  
   ```
-  cd <the directory with the downloaded files from the plugin>
+  cd <the directory which contains the downloaded source code of the plugin>
   cp xmpp-rosterx.[ch] <directory with the unpacked pidgin source>/libpurple/plugins/
   ```
   - For compatibility with prior versions of Pidgin (like the stock version that comes with your distribution), you may lower the plugin's version number (at your own risk), e.g. if you want to use the plugin with Pidgin 2.10.6, just replace `PURPLE_MINOR_VERSION` with `10` in the plugin's `PurplePluginInfo` struct.
 4. Compile the plugin:  
   ```
+  cd <directory with the unpacked pidgin source>/libpurple/plugins/
   make xmpp-roster.so
   ```
 5. Copy compiled plugin to your home directory (you may have to create the `plugins` subdirectory):  
