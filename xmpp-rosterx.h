@@ -14,10 +14,6 @@
  */
 
 typedef struct _JabberStream DummyJabberStream;
-
-/**
- * @file buddy.h Buddy handlers
- */
 typedef struct _JabberBuddy DummyJabberBuddy;
 
 struct _JabberBuddy {
