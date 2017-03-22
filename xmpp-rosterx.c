@@ -45,6 +45,19 @@
 //#define GROUPNAME_DEFAULT _("Buddies")
 #define GROUPNAME_DEFAULT "RosterX Suggestions"
 
+/*
+ * Preferences
+ */
+typedef enum {
+	COMPATIBLE_MESSAGE,
+	COMPATIBLE_XEP
+} CompatibilitySetting;
+
+#define PREFS_BASE        "/plugins/core/dzzinstant-xmpp-rosterx"
+#define PREF_COMPATIBLE   PREFS_BASE "/compatible"
+#define STRICT_XEP        (purple_prefs_get_int(PREF_COMPATIBLE) == COMPATIBLE_XEP)
+
+
 PurplePlugin  *rosterx_plugin = NULL;
 
 
@@ -680,7 +693,6 @@ send_message(PurpleConnection *pc, const char *to, xmlnode *xnode, const char *t
 	xmlnode_free(message);
 }
 
-// TODO: clearer separation between XEP-compliant and mobile-compatible mode
 /* 
  * If entity is online, this implementation sends <iq/> requests
  * to _all_ RosterX-capable resources.
@@ -702,8 +714,8 @@ send_iqs_or_message(PurpleConnection *pc, const char *to, xmlnode *xnode, const 
 
 	resources = g_list_first(find_resources_with_feature(b, NS_ROSTERX));
 
-	if (PURPLE_BUDDY_IS_ONLINE(b) && resources) {
-		while (resources) {
+	if (STRICT_XEP && PURPLE_BUDDY_IS_ONLINE(b) && resources) {
+		while (resources) {  // TODO: choose exactly one resource
 			char *full_jid = create_full_jid(to, resources->data);
 
 			purple_debug_info(PLUGIN_ID, "send_iqs_or_message(): <iq/> to=%s\n", full_jid);
@@ -979,6 +991,11 @@ blist_node_extended_menu_cb(PurpleBlistNode *node, GList **menu, gpointer plugin
 		const char *protocol_id = purple_account_get_protocol_id(account);
 		gboolean option_is_available = jid_is_subscribed(pc, jid);
 
+		if (STRICT_XEP) {  /* extra constraints */
+			option_is_available = option_is_available &&
+				(!PURPLE_BUDDY_IS_ONLINE(b) || find_resources_with_feature(b, NS_ROSTERX));
+		}
+
 		if (equals("prpl-jabber", protocol_id)) {
 			PurpleMenuAction *action = purple_menu_action_new(
 					_("Send contact suggestion"),
@@ -1048,12 +1065,46 @@ plugin_unload(PurplePlugin *plugin)
 	return TRUE;
 }
 
+static PurplePluginPrefFrame *
+get_plugin_pref_frame(PurplePlugin *plugin)
+{
+	PurplePluginPrefFrame *frame;
+	PurplePluginPref *pref;
+
+	frame = purple_plugin_pref_frame_new();
+
+	pref = purple_plugin_pref_new_with_name_and_label(PREF_COMPATIBLE,
+			_("Sending mode:"));
+
+	purple_plugin_pref_set_type(pref, PURPLE_PLUGIN_PREF_CHOICE);
+	purple_plugin_pref_add_choice(pref,
+			"Always send as <message/>",  GINT_TO_POINTER(COMPATIBLE_MESSAGE));
+	purple_plugin_pref_add_choice(pref,
+			"XEP compliant",           GINT_TO_POINTER(COMPATIBLE_XEP));
+
+	purple_plugin_pref_frame_add(frame, pref);
+
+	return frame;
+}
+
+static PurplePluginUiInfo prefs_info = {
+	get_plugin_pref_frame,
+	0,    /* page_num (Reserved) */
+	NULL, /* frame    (Reserved) */
+
+	/* padding */
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
 static PurplePluginInfo info = {
 	PURPLE_PLUGIN_MAGIC,              /* magic number */
 	PURPLE_MAJOR_VERSION,             /* purple major */
 	10 /*PURPLE_MINOR_VERSION */,     /* purple minor: normally PURPLE_MINOR_VERSION
-	                                   * Use an explicit number if you want to use the plugin also with older
-	                                   * versions of Pidgin, e.g. 10 for Pidgin 2.10 and later */
+									   * Use an explicit number if you want to use the plugin also with older
+									   * versions of Pidgin, e.g. 10 for Pidgin 2.10 and later */
 
 	PURPLE_PLUGIN_STANDARD,           /* plugin type */
 	NULL,                             /* UI requirement */
@@ -1069,7 +1120,7 @@ static PurplePluginInfo info = {
 	"The XMPP Roster Item Exchange plugin allows you to suggest other contacts "
 		"from your roster to one of your buddies. "
 		"This is an implementation of the client-to-client aspect of XEP-0144.", 
-	                                  /* description */
+	/* description */
 	PLUGIN_AUTHOR,                    /* author */
 	PLUGIN_HOMEPAGE,                  /* homepage */
 
@@ -1079,7 +1130,7 @@ static PurplePluginInfo info = {
 
 	NULL,                             /* ui info */
 	NULL,                             /* extra info */
-	NULL,                             /* prefs info */
+	&prefs_info,                      /* prefs info */
 	NULL,                             /* actions */
 	NULL,                             /* reserved */
 	NULL,                             /* reserved */
@@ -1089,7 +1140,10 @@ static PurplePluginInfo info = {
 
 static void                        
 init_plugin(PurplePlugin *plugin)
-{                                  
+{
+	purple_prefs_add_none(PREFS_BASE);
+	purple_prefs_add_int(PREF_COMPATIBLE, COMPATIBLE_MESSAGE);
 }
 
 PURPLE_INIT_PLUGIN(core-dzzinstant-rosterx, init_plugin, info)
+
